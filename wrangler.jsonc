@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "desk-hurd-cc",
+  "account_id": "7ceef36ac9912fb68e8b31dc4634db5b",
+  "compatibility_date": "2026-08-05",
+  "routes": [
+    {
+      "pattern": "desk.hurd.cc",
+      "zone_name": "hurd.cc",
+      "custom_domain": true
+    }
+  ],
+  "assets": {
+    "directory": "public",
+    // Serves index.html for /code, /phone, /degrees, ... so deep links open
+    // the matching spot on the desk (see route() in desk/06-script.js.html).
+    "not_found_handling": "single-page-application"
+  }
+}

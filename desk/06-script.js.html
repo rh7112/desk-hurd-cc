@@ -1,0 +1,511 @@
+<script>
+'use strict';
+const $=(s,c=document)=>c.querySelector(s), $$=(s,c=document)=>Array.from(c.querySelectorAll(s));
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const PDF='https://ryan.hurd.cc/documents/ryan-hurd-resume.pdf';
+const SITE='https://ryan.hurd.cc';
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const P={doc:'<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/>',folder:'<path d="M3 6h7l2 2h9v11H3z"/>',term:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M12 16h5"/>',globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',pad:'<rect x="3" y="8" width="18" height="10" rx="5"/><path d="M8 11v4M6 13h4M16 12h.01M18 14h.01"/>',cap:'<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/>',heart:'<path d="M12 20s-8-5-8-11a4.5 4.5 0 018-2.5A4.5 4.5 0 0120 9c0 6-8 11-8 11z"/>',mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',code:'<path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 5l-4 14"/>',cup:'<path d="M5 8h11v6a5 5 0 01-5 5H10a5 5 0 01-5-5zM16 10h2a2 2 0 010 4h-2"/>',phone:'<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/>',link:'<path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/>'};
+const ic=n=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(P[n]||'')+'</svg>';
+
+/* ---------- toast + copy ---------- */
+let tt;
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),1800)}
+function copy(v){
+  const fb=()=>{const a=document.createElement('textarea');a.value=v;a.setAttribute('readonly','');a.style.cssText='position:fixed;opacity:0';document.body.appendChild(a);a.select();let ok=false;try{ok=document.execCommand('copy')}catch(e){}a.remove();toast(ok?'Copied '+v:'Copy failed: '+v)};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(v).then(()=>toast('Copied '+v),fb);else fb();
+}
+
+/* ---------- boot sequence ---------- */
+const SEQ={
+  code:{text:'RYAN',fs:3.2,steps:['s-term','s-metal','s-graf','s-script','s-serif'],start:0},
+  center:{text:'RYAN HURD',fs:2.6,steps:['s-graf','s-metal','s-script','s-term','s-serif','s-graf'],start:350},
+  projects:{text:'RYAN HURD',fs:2.6,steps:['s-serif','s-term','s-graf','s-script','s-metal','s-graf'],start:700}
+};
+let bootId=0;
+const mons=()=>$$('.mon');
+function flash(scr){const f=$('.fl',scr);f.classList.remove('go');void f.offsetWidth;f.classList.add('go')}
+function finishMon(m){const scr=$('.scr',m);$('.gl',m).hidden=true;scr.classList.add('on')}
+async function bootMon(m,cfg,id){
+  const scr=$('.scr',m),gl=$('.gl',m),g=$('.g',m);
+  scr.classList.remove('on');gl.hidden=false;g.textContent=cfg.text;g.dataset.text=cfg.text;g.style.setProperty('--fs',cfg.fs);g.className='g';
+  await wait(cfg.start);
+  for(const s of cfg.steps){
+    if(id!==bootId)return;
+    g.className='g jit '+s;flash(scr);await wait(170);
+    if(id!==bootId)return;
+    g.classList.remove('jit');await wait(430);
+  }
+  if(id!==bootId)return;
+  flash(scr);await wait(120);
+  if(id===bootId)finishMon(m);
+}
+function boot(){
+  const id=++bootId;
+  if(reduced){mons().forEach(finishMon);return}
+  mons().forEach(m=>bootMon(m,SEQ[m.dataset.app],id));
+}
+$('#replay').addEventListener('click',boot);
+$('#skip').addEventListener('click',()=>{bootId++;mons().forEach(finishMon)});
+
+/* ---------- overlay ---------- */
+const AR={code:.6,center:1.6,projects:1.6,phone:.5};
+let opener=null,curApp=null;
+const ov=$('#ov'),frame=$('#frame');
+function setApp(name){
+  curApp=name;setTok(APP_TOK[name]);
+  $$('#display > .app').forEach(a=>a.hidden=a.dataset.app!==name);
+  frame.style.setProperty('--ar',AR[name]);
+  frame.setAttribute('aria-label',{code:'Code monitor',center:'Desktop monitor',projects:'Projects monitor',phone:'Phone'}[name]);
+}
+function openApp(name,from,win){
+  closePop();
+  if(!ov.hidden){setApp(name);initApp(name,win);return}
+  opener=from||document.activeElement;
+  ov.hidden=false;document.body.classList.add('lock');syncHome();
+  setApp(name);initApp(name,win);
+  const src=(from&&from.getBoundingClientRect)?from.getBoundingClientRect():null;
+  if(src&&src.width&&!reduced){
+    const to=frame.getBoundingClientRect();
+    frame.animate([{transform:'translate('+(src.left+src.width/2-to.left-to.width/2)+'px,'+(src.top+src.height/2-to.top-to.height/2)+'px) scale('+(src.width/to.width)+','+(src.height/to.height)+')',opacity:.5},{transform:'none',opacity:1}],{duration:380,easing:'cubic-bezier(.2,.8,.2,1)'});
+  }
+  $('#close').focus();
+}
+function closeApp(){
+  if(ov.hidden)return;
+  if(curApp==='code'||curApp==='projects'){setApp('center');initApp('center');return}
+  const done=()=>{ov.hidden=true;document.body.classList.remove('lock');syncHome();setTok(STOP_TOK[si]);if(opener&&opener.focus&&document.contains(opener))opener.focus()};
+  const src=opener&&opener.getBoundingClientRect?opener.getBoundingClientRect():null;
+  if(src&&src.width&&!reduced&&opener.classList&&opener.classList.contains('mon')){
+    const to=frame.getBoundingClientRect();
+    frame.animate([{transform:'none',opacity:1},{transform:'translate('+(src.left+src.width/2-to.left-to.width/2)+'px,'+(src.top+src.height/2-to.top-to.height/2)+'px) scale('+(src.width/to.width)+','+(src.height/to.height)+')',opacity:.3}],{duration:280,easing:'ease-in'}).onfinish=done;
+  }else done();
+}
+$('#close').addEventListener('click',closeApp);
+ov.addEventListener('click',e=>{if(e.target===ov)closeApp()});
+mons().forEach(m=>m.addEventListener('click',()=>openApp(m.dataset.app,m)));
+$$('[data-m]').forEach(b=>b.addEventListener('click',()=>openApp(b.dataset.m,b)));
+function initApp(name,win){
+  if(name==='code'){const narrow=$('#display').clientWidth<560;$('#exp').classList.toggle('closed',narrow);$('#tgExp').setAttribute('aria-pressed',!narrow);if(win){openFile(win)}}
+  if(name==='center'){initOS();if(win)openWin(win)}
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    if(!$('#pop').hidden){closePop();return}
+    if(!$('#start').hidden){$('#start').hidden=true;return}
+    closeApp();
+  }
+  if(e.key==='Tab'&&!ov.hidden){
+    const f=$$('button,a[href],input,textarea,summary,[tabindex="0"]',ov).filter(x=>x.offsetParent!==null&&!x.disabled);
+    if(!f.length)return;
+    const a=f[0],z=f[f.length-1];
+    if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus()}
+    else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus()}
+    else if(!ov.contains(document.activeElement)){e.preventDefault();a.focus()}
+  }
+});
+
+/* ---------- code app ---------- */
+const FILES={
+'README.md':['md',`# Ryan Hurd
+Software Engineer · Internal Tools & User Experience
+Warsaw, IN
+
+I turn messy, spreadsheet-driven processes into tools people enjoy using.
+4+ years building Retool, SQL and JavaScript apps for accounting,
+compliance, support and operations.
+
+## Find things
+- Projects   → open the projects/ folder
+- Blog       → https://blog.hurd.cc/blog/
+- Recipes    → https://blog.hurd.cc/recipes/
+- API docs   → https://api.hurd.cc/docs/
+- Resume     → https://ryan.hurd.cc/resume
+- Contact    → ryan@hurd.cc`],
+'projects/hurd-platform.md':['md',`# Hurd Craft platform
+My own blog and portfolio platform.
+
+- Next.js front end on Cloudflare Workers
+- Go API (api.hurd.cc) backed by MariaDB
+- Admin experience for writing posts and recipes
+
+Page: https://ryan.hurd.cc/projects/hurd-platform`],
+'projects/bbsystems-us.md':['md',`# BBSystems.us
+Client site built under Hurd Craft Co. LLC.
+
+Live site: https://bbsystems.us
+Page: https://ryan.hurd.cc/projects/bbsystems-us`],
+'projects/ramonas-portfolio.md':['md',`# Ramona Bauch's portfolio
+Client portfolio site built under Hurd Craft Co. LLC.
+
+Page: https://ryan.hurd.cc/projects/ramonas-portfolio`],
+'projects/miretti-construction.md':['md',`# Miretti Quality Construction
+Client site built under Hurd Craft Co. LLC.
+
+Page: https://ryan.hurd.cc/projects/miretti-construction`],
+'blog/index.md':['md',`# Blog
+Notes on building things.
+
+Read it: https://blog.hurd.cc/blog/`],
+'recipes/index.md':['md',`# Recipes
+Cooking, written down properly.
+
+Browse: https://blog.hurd.cc/recipes/`],
+'api/docs.md':['md',`# API
+The Go API behind the site. Public docs:
+
+https://api.hurd.cc/docs/`],
+'books/favorites.md':['md',`# Favorite books
+The ones on my shelf, and why they stay.
+
+## Currently reading
+- The Testaments · Margaret Atwood
+- Ask Your Developer · Jeff Lawson
+- The Seven Deadly Sins, Vol. 6 · Nakaba Suzuki
+
+## Favorites (4 stars and up)
+
+### Upper shelf
+- ★ Of Mice and Men · John Steinbeck
+- Clean Code · Robert C. Martin
+- The Handmaid's Tale · Margaret Atwood
+- Harry Potter and the Sorcerer's Stone · J.K. Rowling
+
+### Lower shelf
+- Walden · Henry David Thoreau
+- Animal Farm · George Orwell
+- ★ Into the Wild · Jon Krakauer
+
+## Notes
+- ★ = all-time favorite, always kept on the shelf.
+- Synced from my Goodreads shelves.
+- Recommendations welcome: ryan@hurd.cc`],
+'github-stats.json':['json',`{
+  "_preview": "sample shape - the live site fills this from its GitHub data feed",
+  "user": "rh7112",
+  "profile": "https://github.com/rh7112",
+  "pinned": [
+    "ryans-portfolio",
+    "portfolio-api",
+    "bbsystems-us",
+    "braden-tucker-portfolio",
+    "hurd-cc"
+  ]
+}`]
+};
+const TREE=[['README.md'],['projects',['projects/hurd-platform.md','projects/bbsystems-us.md','projects/ramonas-portfolio.md','projects/miretti-construction.md']],['blog',['blog/index.md']],['recipes',['recipes/index.md']],['api',['api/docs.md']],['github-stats.json'],['books',['books/favorites.md']]];
+let tabs=[],cur=null;
+const nm=p=>p.split('/').pop();
+function hl(line,lang){
+  let s=esc(line);
+  if(lang==='json'){s=s.replace(/&quot;/g,'"').replace(/"([^"]+)"(\s*:)/g,'<span class="k">"$1"</span>$2').replace(/:\s*("[^"]*")/g,': <span class="s">$1</span>').replace(/^(\s*)("[^"<]*",?)$/,'$1<span class="s">$2</span>')}
+  else{
+    if(/^#{1,3} /.test(s))s='<span class="h">'+s+'</span>';
+    else s=s.replace(/^(\s*-) /,'<span class="b">$1</span> ').replace(/`([^`]+)`/g,'<span class="c">`$1`</span>');
+  }
+  return s.replace(/(https?:\/\/[^\s)<"]+)/g,'<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+}
+function welcome(){
+  const link=(p,d)=>'<li><button class="wl" type="button" data-f="'+p+'">'+p+'</button><span>'+d+'</span></li>';
+  return '<div class="wel"><h2>Ryan Hurd</h2><p class="sub">Portfolio, editing evolved</p><h3>Start</h3><ul>'+link('README.md','Who I am and where to find things')+link('projects/hurd-platform.md','Latest project')+link('books/favorites.md','Favorite books')+'</ul><h3>Everything here</h3><ul>'+Object.keys(FILES).sort((a,b)=>a.startsWith('books/')-b.startsWith('books/')).map(p=>link(p,'')).join('')+'</ul><p class="hint">Pick a file here or from the Explorer on the left.</p></div>';
+}
+function renderCode(){
+  $$('#tree .f').forEach(b=>b.classList.toggle('on',b.dataset.f===cur));
+  $('#tabs').innerHTML=tabs.map(t=>'<div class="tab'+(t===cur?' on':'')+'" role="presentation"><button role="tab" type="button" aria-selected="'+(t===cur)+'" data-t="'+t+'">'+nm(t)+'</button><button class="x" type="button" aria-label="Close '+nm(t)+'" data-x="'+t+'">×</button></div>').join('');
+  if(!cur){$('#codeA').innerHTML=welcome();$('#codeA').scrollTop=0;$('#sbLang').textContent='Welcome';return}
+  const [lang,text]=FILES[cur];
+  $('#codeA').innerHTML=text.split('\n').map((l,i)=>'<div class="cl2"><span class="n">'+(i+1)+'</span><span class="t">'+hl(l,lang)+'</span></div>').join('');
+  $('#codeA').scrollTop=0;
+  $('#sbLang').textContent=lang==='json'?'JSON':'Markdown';
+}
+function openFile(p){if(!tabs.includes(p))tabs.push(p);cur=p;renderCode()}
+(function(){
+  $('#tree').innerHTML=TREE.map(n=>n[1]?'<details open><summary>'+n[0]+'</summary>'+n[1].map(f=>'<button class="f" type="button" data-f="'+f+'">'+nm(f)+'</button>').join('')+'</details>':'<button class="f top" type="button" data-f="'+n[0]+'">'+n[0]+'</button>').join('');
+  $('#codeA').addEventListener('click',e=>{const b=e.target.closest('.wl');if(b)openFile(b.dataset.f)});
+  $('#tree').addEventListener('click',e=>{const b=e.target.closest('[data-f]');if(b){openFile(b.dataset.f);if($('#display').clientWidth<560)$('#exp').classList.add('closed')}});
+  $('#tabs').addEventListener('click',e=>{
+    const x=e.target.closest('[data-x]'),t=e.target.closest('[data-t]');
+    if(x){const f=x.dataset.x;tabs=tabs.filter(y=>y!==f);if(cur===f)cur=tabs[tabs.length-1]||null;renderCode()}
+    else if(t){cur=t.dataset.t;renderCode()}
+  });
+  $('#tgExp').addEventListener('click',()=>{const c=$('#exp').classList.toggle('closed');$('#tgExp').setAttribute('aria-pressed',!c)});
+  renderCode();
+})();
+
+/* ---------- mini desktop ---------- */
+const EXP=[
+ {co:'Hurd Craft Co. LLC',role:'Founder & Developer',when:'Sep 2026 – Present',slug:'hurd-craft',pts:["Client sites: BBSystems.us, Ramona Bauch's portfolio and Miretti Quality Construction.",'Built my own blog and portfolio platform on Next.js, Cloudflare Workers, a Go API and MariaDB, with an admin experience.','Freelance Retool consulting.']},
+ {co:'Packaging Personified, Inc.',role:'Software Engineer',when:'Oct 2025 – Oct 2026',slug:'packaging-personified',pts:['Built Retool apps on PostgreSQL, including the Yield Report.','Consolidated EPA reporting for Illinois and Michigan.','Shipped the Header Module and Location Swap app.','Cut Press WIP processing time by 40%+ and trained the people using the tools.']},
+ {co:'Sweetwater Sound',role:'Software Engineer',when:'May 2021 – Aug 2025',slug:'sweetwater-sound',pts:['Avalara Exemption Certificate Management System: 160+ hours a month saved.','Braintree (GraphQL) integration that launched Gear Exchange, which passed $1M in sales.','Price Management Platform, tied to $4M in added revenue.','Turkey Handout app, built in 72 hours for 2,500 employees.']},
+ {co:'Earlier roles',role:'2016 – 2020',pts:['Zimmer Biomet: IT Intern','U.S. Census Bureau: Post-Enumeration Surveyor','Staples: Technology Sales Associate',"Black's Concrete: Laborer"]}
+];
+const WIN={
+ resume:{title:'About Ryan',ic:'doc',x:104,y:14,w:540,h:410,html:()=>`<h2>Ryan Hurd</h2><p class="sub">Software Engineer · Internal Tools &amp; User Experience · Warsaw, IN</p>
+  <p>I turn messy, spreadsheet-driven processes into tools people enjoy using. I've spent 4+ years building Retool, SQL and JavaScript apps for accounting, compliance, support and operations, and I design around the user first. Full-stack and general IT are both home turf.</p>
+  <h3>Impact</h3><div class="tiles"><div><b>160+</b><span>hours a month saved by the exemption-certificate system</span></div><div><b>$1M+</b><span>in Gear Exchange sales on the Braintree integration</span></div><div><b>$4M</b><span>added revenue tied to the Price Management Platform</span></div><div><b>40%+</b><span>faster Press WIP processing</span></div><div><b>72 hrs</b><span>to build an app for 2,500 employees</span></div><div><b>4+ yrs</b><span>Retool, SQL and JavaScript</span></div></div>
+  <h3>Skills</h3><div class="chips"><span>Retool</span><span>JavaScript</span><span>SQL</span><span>PostgreSQL</span><span>React / Next.js</span><span>Go</span><span>Python</span><span>REST / GraphQL</span><span>Workflow design</span><span>Usability</span><span>Component systems</span><span>Training</span><span>Hardware &amp; imaging</span><span>Networking</span></div>
+  <div class="btns"><a class="btn" href="${PDF}" target="_blank" rel="noopener noreferrer">Download resume (PDF)</a><button class="btn alt" type="button" data-win="experience">Experience</button><button class="btn alt" type="button" data-win="education">Education</button></div>`},
+ experience:{title:'Experience',ic:'folder',x:150,y:34,w:520,h:390,html:()=>EXP.map((e,i)=>`<details${i===0?' open':''}><summary>${e.co}<small>${e.role} · ${e.when||''}</small></summary><div><ul>${e.pts.map(p=>'<li>'+esc(p)+'</li>').join('')}</ul>${e.slug?`<a href="${SITE}/experience/${e.slug}" target="_blank" rel="noopener noreferrer">Full page ↗</a>`:''}</div></details>`).join('')},
+ education:{title:'Education & certs',ic:'cap',x:190,y:54,w:460,h:330,html:()=>`<h3>Degrees</h3><p><b>Core 40 Diploma with Academic Honors</b>, Whitko High School</p><p><b>B.S. Computer Science</b>, Purdue Fort Wayne (2021)</p><p><b>A.S. Computer Science</b>, Ivy Tech (2019)</p><h3>Certifications</h3><ul><li>Retool Platform Developer and Admin (2025)</li><li>Python PCEP (2021)</li><li>CompTIA A+ (2017)</li></ul><div class="btns"><a class="btn" href="${SITE}/resume" target="_blank" rel="noopener noreferrer">Transcripts &amp; full resume ↗</a></div>`},
+ volunteer:{title:'Volunteer',ic:'heart',x:230,y:74,w:420,h:260,html:()=>`<h2>Volunteer</h2><p class="sub">Preview placeholder</p><p>The volunteer history lives at /volunteer on the current site. It will be pulled into this window when the desk goes live.</p><div class="btns"><a class="btn" href="${SITE}/volunteer" target="_blank" rel="noopener noreferrer">Open the volunteer page ↗</a></div>`},
+ games:{title:'Games',ic:'pad',x:270,y:94,w:420,h:260,html:()=>`<h2>Games</h2><p class="sub">PlayStation profile and trophies</p><p>Preview placeholder. The live site reads this from its PlayStation data feed, so this window will show the real profile and trophy list.</p>`},
+ terminal:{title:'Terminal',ic:'term',x:120,y:60,w:520,h:330,html:()=>`<div class="term"><div class="to" aria-live="polite"></div><form><span>$</span><input aria-label="Terminal input" autocomplete="off" spellcheck="false"></form></div>`,init:initTerm}
+};
+const ITEMS=[['resume','About me','doc'],['experience','Experience','folder'],['education','Education','cap'],['volunteer','Volunteer','heart'],['games','Games','pad'],['terminal','Terminal','term']];
+const LINKS=[['Blog','globe','https://blog.hurd.cc/blog/'],['Recipes','cup','https://blog.hurd.cc/recipes/'],['API docs','code','https://api.hurd.cc/docs/']];
+const wins=new Map();let zTop=10,osReady=false;
+function initOS(){
+  if(osReady)return;osReady=true;
+  $('#icons').innerHTML=ITEMS.map(i=>'<button class="di" type="button" data-win="'+i[0]+'">'+ic(i[2])+i[1]+'</button>').join('')+LINKS.map(l=>'<a class="di" href="'+l[2]+'" target="_blank" rel="noopener noreferrer">'+ic(l[1])+l[0]+'</a>').join('');
+  $('#start').innerHTML=ITEMS.map(i=>'<button type="button" data-win="'+i[0]+'">'+ic(i[2])+i[1]+'</button>').join('')+'<hr>'+LINKS.map(l=>'<a href="'+l[2]+'" target="_blank" rel="noopener noreferrer">'+ic(l[1])+l[0]+'</a>').join('')+'<hr><button type="button" data-app="code">'+ic('code')+'Code monitor</button><button type="button" data-app="projects">'+ic('code')+'Projects monitor</button>';
+  $('#startBtn').addEventListener('click',e=>{e.stopPropagation();$('#start').hidden=!$('#start').hidden});
+  $('#os').addEventListener('click',e=>{
+    const w=e.target.closest('[data-win]'),a=e.target.closest('[data-app]');
+    if(w){openWin(w.dataset.win);$('#start').hidden=true}
+    else if(a){$('#start').hidden=true;openApp(a.dataset.app)}
+    else if(!e.target.closest('#start'))$('#start').hidden=true;
+  });
+  const tick=()=>{$('#clock').textContent=new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})};tick();setInterval(tick,30000);
+}
+function openWin(id){
+  const d=WIN[id];if(!d)return;
+  let w=wins.get(id);
+  if(w){w.el.hidden=false;w.min=false;focusWin(id);return}
+  const el=document.createElement('section');
+  el.className='win';el.setAttribute('role','group');el.setAttribute('aria-label',d.title);
+  el.style.cssText='left:'+d.x+'px;top:'+d.y+'px;width:'+d.w+'px;height:'+d.h+'px';
+  el.innerHTML='<header class="wt"><span class="wi">'+ic(d.ic)+'</span><b>'+d.title+'</b><span class="wb"><button type="button" data-a="min" aria-label="Minimize">–</button><button type="button" data-a="close" aria-label="Close">×</button></span></header><div class="wc">'+d.html()+'</div>';
+  $('#wins').appendChild(el);
+  w={el,min:false};wins.set(id,w);
+  const os=$('#os').getBoundingClientRect();
+  el.style.width=Math.min(d.w,os.width-20)+'px';el.style.height=Math.min(d.h,os.height-60)+'px';
+  el.style.left=Math.max(0,Math.min(d.x,os.width-el.offsetWidth))+'px';el.style.top=Math.max(0,Math.min(d.y,os.height-el.offsetHeight-44))+'px';
+  el.addEventListener('pointerdown',()=>focusWin(id));
+  el.addEventListener('click',e=>{
+    const b=e.target.closest('[data-a]');
+    if(b){if(b.dataset.a==='close'){el.remove();wins.delete(id)}else{w.min=true;el.hidden=true}renderTask();return}
+    const o=e.target.closest('[data-win]');if(o)openWin(o.dataset.win);
+  });
+  drag(el);
+  if(d.init)d.init(el);
+  focusWin(id);
+}
+function focusWin(id){
+  wins.forEach((w,k)=>w.el.classList.toggle('f',k===id));
+  const w=wins.get(id);if(w){w.el.style.zIndex=++zTop}
+  renderTask(id);
+}
+let focused=null;
+function renderTask(f){
+  if(f!==undefined)focused=f;
+  $('#running').innerHTML=Array.from(wins.keys()).map(k=>'<button type="button" data-t="'+k+'" class="'+(k===focused&&!wins.get(k).min?'act2':'')+'">'+WIN[k].title+'</button>').join('');
+  $$('#running button').forEach(b=>b.addEventListener('click',()=>{
+    const k=b.dataset.t,w=wins.get(k);
+    if(w.min||k!==focused)openWin(k);else{w.min=true;w.el.hidden=true;renderTask()}
+  }));
+}
+function drag(el){
+  const h=$('.wt',el);
+  h.addEventListener('pointerdown',e=>{
+    if(e.target.closest('button'))return;
+    const os=$('#os').getBoundingClientRect(),r=el.getBoundingClientRect(),ox=e.clientX-r.left,oy=e.clientY-r.top;
+    h.setPointerCapture(e.pointerId);
+    const mv=ev=>{el.style.left=Math.max(0,Math.min(os.width-r.width,ev.clientX-os.left-ox))+'px';el.style.top=Math.max(0,Math.min(os.height-r.height-40,ev.clientY-os.top-oy))+'px'};
+    const up=()=>{h.removeEventListener('pointermove',mv);h.removeEventListener('pointerup',up);h.removeEventListener('pointercancel',up)};
+    h.addEventListener('pointermove',mv);h.addEventListener('pointerup',up);h.addEventListener('pointercancel',up);
+  });
+}
+function initTerm(el){
+  const out=$('.to',el),inp=$('input',el),hist=[];let hi=0;
+  const say=t=>{const d=document.createElement('div');d.textContent=t;out.appendChild(d);out.scrollTop=out.scrollHeight};
+  const OPEN={resume:'resume',about:'resume',experience:'experience',education:'education',volunteer:'volunteer',games:'games'};
+  const EXT={blog:'https://blog.hurd.cc/blog/',recipes:'https://blog.hurd.cc/recipes/',api:'https://api.hurd.cc/docs/',github:'https://github.com/rh7112'};
+  say('Type "help" for commands.');
+  const run=v=>{
+    const [c,...a]=v.split(/\s+/),arg=(a[0]||'').toLowerCase();
+    if(c==='help')say('help  whoami  ls  open <name>  contact  github  clear');
+    else if(c==='whoami')say('Ryan Hurd - Software Engineer, Internal Tools & User Experience. Warsaw, IN.');
+    else if(c==='ls')say('resume  experience  education  volunteer  games  code  contact  blog  recipes  api');
+    else if(c==='contact')say('ryan@hurd.cc  ·  (352) 580-0408');
+    else if(c==='github')say('https://github.com/rh7112');
+    else if(c==='clear')out.innerHTML='';
+    else if(c==='open'){
+      if(OPEN[arg]){openWin(OPEN[arg]);say('opening '+arg)}
+      else if(arg==='code'||arg==='projects'){say('opening '+arg);openApp(arg)}
+      else if(arg==='contact'){say('opening phone');openApp('phone')}
+      else if(EXT[arg]){window.open(EXT[arg],'_blank','noopener');say('opening '+EXT[arg])}
+      else say('open what? try: ls');
+    }else say('command not found: '+c);
+  };
+  $('form',el).addEventListener('submit',e=>{e.preventDefault();const v=inp.value.trim();inp.value='';if(!v)return;hist.push(v);hi=hist.length;say('$ '+v);run(v)});
+  inp.addEventListener('keydown',e=>{
+    if(e.key==='ArrowUp'&&hist.length){hi=Math.max(0,hi-1);inp.value=hist[hi];e.preventDefault()}
+    if(e.key==='ArrowDown'){hi=Math.min(hist.length,hi+1);inp.value=hist[hi]||'';e.preventDefault()}
+  });
+  el.addEventListener('click',()=>inp.focus());
+}
+
+/* ---------- projects dashboard ---------- */
+(function(){
+  let x=7;const r=()=>(x=(x*1103515245+12345)&0x7fffffff)/0x7fffffff;
+  let h='';for(let i=0;i<26*7;i++){const v=r(),l=v<.38?0:v<.6?1:v<.8?2:v<.93?3:4;h+='<i class="l'+l+'"></i>'}
+  $('#gh').innerHTML=h;
+})();
+
+/* ---------- desk hotspots + popover ---------- */
+const go=(app,win)=>openApp(app,$('.mon[data-app="'+app+'"]'),win);
+const SPOTIFY_URL='https://open.spotify.com/playlist/3SsieOKDqSszt55fO5n6UO';
+const HS=[
+ {l:'Mechanical keyboard (Das Keyboard)',x:520,y:660,w:380,h:50,href:'https://www.daskeyboard.com'},
+ {l:'Paper tray: documents',x:1392,y:596,w:164,h:100,pop:{t:'Paper tray',b:'Resume and paperwork.',links:[{t:'Resume (PDF)',href:PDF},{t:'Transcripts & certs',fn:()=>go('center','education')},{t:'Experience',fn:()=>go('center','experience')}]}},
+ {l:'Mug: Tea, Earl Grey, Hot (buy me a coffee)',x:909,y:624,w:58,h:62,pop:{t:'Tea, Earl Grey, Hot',b:'Enjoying the site? You can buy me a coffee (or a tea).',links:[{t:'Buy me a coffee',href:'https://buymeacoffee.com/ryan.hurd'}]}},
+ {l:'Pen cup: blog',x:216,y:592,w:32,h:70,href:'https://blog.hurd.cc/blog/'},
+ {l:'Headphones: music',x:314,y:606,w:112,h:86,pop:{t:'Headphones',b:'My "Americana" playlist: Shakey Graves, Hovvdy, Mon Rovia and more.',links:SPOTIFY_URL?[{t:'Open Americana on Spotify',href:SPOTIFY_URL},{t:'Games on the desktop',fn:()=>go('center','games')}]:[{t:'Playlist link coming soon',fn:()=>toast('Playlist link coming soon')},{t:'Games on the desktop',fn:()=>go('center','games')}]}},
+ {l:'Notepad: volunteer',x:48,y:670,w:80,h:54,fn:()=>go('center','volunteer')},
+ {l:'Phone: call, text and socials',x:1278,y:654,w:44,h:70,fn:()=>go('phone')},
+ {l:'External drive: resume PDF',x:178,y:688,w:62,h:30,href:PDF},
+ {l:'Diploma: Whitko, Core 40 with Academic Honors',x:646,y:170,w:140,h:108,fn:()=>go('center','education')},
+ {l:'Degree: Ivy Tech, A.S. Computer Science',x:846,y:170,w:140,h:108,fn:()=>go('center','education')},
+ {l:'Degree: Purdue Fort Wayne, B.S. Computer Science',x:1046,y:170,w:140,h:108,fn:()=>go('center','education')},
+ {l:'Bookshelf: favorite books',x:46,y:100,w:152,h:90,fn:()=>go('code','books/favorites.md')},
+ {l:'Books: favorite books',x:44,y:216,w:82,h:84,fn:()=>go('code','books/favorites.md')},
+ {l:'Recipe jar: recipes',x:158,y:252,w:42,h:50,href:'https://blog.hurd.cc/recipes/'},
+ {l:'NAS: API docs',x:318,y:781,w:154,h:103,href:'https://api.hurd.cc/docs/'},
+ {l:'PC tower: site status',x:118,y:754,w:174,h:130,pop:{t:'Site status (sample)',b:'● Web up   ● API up   ● Database up',links:[{t:'API docs',href:'https://api.hurd.cc/docs/'},{t:'Open the code monitor',fn:()=>go('code')}]}}
+];
+$('#hs').innerHTML='';
+HS.forEach((h,i)=>{
+  const a=document.createElement(h.href?'a':'button');
+  a.className='hs';a.style.cssText='--x:'+h.x+';--y:'+h.y+';--w:'+h.w+';--h:'+h.h;
+  a.setAttribute('aria-label',h.l);
+  a.innerHTML='<span class="tip">'+esc(h.l)+'</span>';
+  if(h.href){a.href=h.href;a.target='_blank';a.rel='noopener noreferrer'}
+  else{a.type='button';a.addEventListener('click',e=>{e.stopPropagation();h.pop?showPop(a,h.pop):h.fn()})}
+  $('#cam').appendChild(a);
+});
+const pop=$('#pop');
+function closePop(){pop.hidden=true}
+function showPop(el,d){
+  pop.innerHTML='<h3>'+esc(d.t)+'</h3><p>'+esc(d.b)+'</p><div class="pl"></div>';
+  const pl=$('.pl',pop);
+  d.links.forEach(l=>{
+    const n=document.createElement(l.href?'a':'button');
+    n.textContent=l.t;
+    if(l.href){n.href=l.href;n.target='_blank';n.rel='noopener noreferrer'}else{n.type='button';n.addEventListener('click',()=>{closePop();l.fn()})}
+    pl.appendChild(n);
+  });
+  pop.hidden=false;
+  const r=el.getBoundingClientRect(),pw=pop.offsetWidth,ph=pop.offsetHeight;
+  pop.style.left=Math.max(12,Math.min(innerWidth-pw-12,r.left+r.width/2-pw/2))+'px';
+  pop.style.top=Math.max(12,Math.min(innerHeight-ph-12,r.top-ph-10<12?r.bottom+10:r.top-ph-10))+'px';
+  const f=$('a,button',pop);if(f)f.focus();
+}
+document.addEventListener('click',e=>{if(!pop.hidden&&!pop.contains(e.target))closePop()});
+
+/* ---------- traverse the desk ---------- */
+const STOPS=[
+ {n:'Overview',cx:800,cy:450,s:1},
+ {n:'Bookshelf',cx:120,cy:200,s:2.6},
+ {n:'Degrees',cx:916,cy:225,s:2.3},
+ {n:'Left screen',cx:412,cy:350,s:2.8},
+ {n:'Center screen',cx:728,cy:430,s:2.3},
+ {n:'Right screen',cx:1103,cy:430,s:2.3},
+ {n:'Desk',cx:270,cy:660,s:2.4},
+ {n:'Phone',cx:1330,cy:670,s:2.8},
+ {n:'Under the desk',cx:300,cy:790,s:2.4}
+];
+const cam=$('#cam'),stg=$('#stage');
+let si=0,cs=1,ctx0=0,cty0=0;
+function view(cx,cy,s){
+  const W=stg.clientWidth,H=stg.clientHeight,cw=cam.offsetWidth,ch=cam.offsetHeight;
+  cs=s;
+  ctx0=Math.min(0,Math.max(W-cw*s,W/2-cx*(cw/1600)*s));
+  cty0=Math.min(0,Math.max(H-ch*s,H/2-cy*(ch/900)*s));
+  cam.style.transform='translate('+ctx0+'px,'+cty0+'px) scale('+s+')';
+}
+function stop(i){
+  si=(i+STOPS.length)%STOPS.length;const p=STOPS[si];
+  const mob=cam.offsetWidth>stg.clientWidth*1.2;
+  view(p.cx,p.cy,mob?(si?Math.max(1.25,p.s*stg.clientWidth/cam.offsetWidth):1):p.s);
+  $$('#tChips button').forEach((b,k)=>{b.setAttribute('aria-pressed',k===si);if(k===si&&b.scrollIntoView)b.scrollIntoView({inline:'center',block:'nearest'})});
+  closePop();syncHome();if(ov.hidden)setTok(STOP_TOK[si]);
+}
+function syncHome(){$('#home').hidden=!ov.hidden||si===0}
+$('#home').addEventListener('click',()=>stop(0));
+$('#tChips').innerHTML=STOPS.map((p,k)=>'<button type="button" aria-pressed="'+(k===0)+'">'+p.n+'</button>').join('');
+$('#tChips').addEventListener('click',e=>{const b=e.target.closest('button');if(b)stop($$('#tChips button').indexOf(b))});
+$('#tPrev').addEventListener('click',()=>stop(si-1));
+$('#tNext').addEventListener('click',()=>stop(si+1));
+addEventListener('resize',()=>stop(si));
+document.addEventListener('keydown',e=>{
+  if(!ov.hidden||e.altKey||e.ctrlKey||e.metaKey)return;
+  const t=e.target;if(t&&/INPUT|TEXTAREA|SELECT/.test(t.tagName))return;
+  if(e.key==='ArrowRight'){e.preventDefault();stop(si+1)}
+  else if(e.key==='ArrowLeft'){e.preventDefault();stop(si-1)}
+  else if(e.key==='Home'){e.preventDefault();stop(0)}
+});
+/* drag to pan while zoomed */
+(function(){
+  let d=null,moved=false;
+  stg.addEventListener('pointerdown',e=>{if((cam.offsetWidth*cs<=stg.clientWidth+1&&cam.offsetHeight*cs<=stg.clientHeight+1)||e.button!==0||e.target.closest('.trav'))return;d={x:e.clientX,y:e.clientY,tx:ctx0,ty:cty0};moved=false});
+  addEventListener('pointermove',e=>{
+    if(!d)return;
+    const dx=e.clientX-d.x,dy=e.clientY-d.y;
+    if(!moved&&Math.hypot(dx,dy)<5)return;
+    moved=true;cam.classList.add('drag');
+    const W=stg.clientWidth,H=stg.clientHeight;
+    ctx0=Math.min(0,Math.max(W-cam.offsetWidth*cs,d.tx+dx));cty0=Math.min(0,Math.max(H-cam.offsetHeight*cs,d.ty+dy));
+    cam.style.transform='translate('+ctx0+'px,'+cty0+'px) scale('+cs+')';
+  });
+  addEventListener('pointerup',()=>{d=null;cam.classList.remove('drag')});
+  stg.addEventListener('click',e=>{if(moved){e.preventDefault();e.stopPropagation();moved=false}},true);
+})();
+
+/* miniature screens: scaled, inert copies of the real apps each monitor opens */
+(function(){
+  initOS();
+  [['code',640],['center',1000],['projects',1000]].forEach(([app,W])=>{
+    const src=$('#display > .app[data-app="'+app+'"]'),mini=$('.mon[data-app="'+app+'"] .mini');
+    if(!src||!mini)return;
+    const c=src.cloneNode(true),disp=document.createElement('div');
+    c.hidden=false;
+    if(app==='center'){
+      const clk=$('time',c);
+      if(!clk.textContent.trim())clk.textContent=new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+    }
+    c.querySelectorAll('[id]').forEach(n=>n.removeAttribute('id'));
+    c.setAttribute('inert','');c.setAttribute('aria-hidden','true');
+    disp.className='mdisp';disp.style.width=W+'px';disp.appendChild(c);mini.appendChild(disp);
+    const fit=()=>{const w=mini.clientWidth;if(!w)return;const s=w/W;disp.style.height=(mini.clientHeight/s)+'px';disp.style.transform='scale('+s+')'};
+    new ResizeObserver(fit).observe(mini);fit();
+  });
+})();
+
+/* ---------- deep links: #token here; on the live site the same tokens are paths (desk.hurd.cc/code) ---------- */
+const APP_TOK={code:'code',center:'desktop',projects:'projects',phone:'phone'};
+const APP_STOP={code:3,center:4,projects:5,phone:7};
+const STOP_TOK=['overview','bookshelf','degrees','left','center','right','desk','table','under'];
+let routing=false;
+/* Real hosts use clean paths (/code, /phone, ...); sandboxed previews fall back to #hash. A #hash always wins so in-page links still work. */
+const PATHS=/(^|\.)hurd\.cc$|^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+function curTok(){try{const h=decodeURIComponent(location.hash.slice(1)).toLowerCase();if(h||!PATHS)return h;return decodeURIComponent(location.pathname).replace(/^\/+|\/+$/g,'').toLowerCase()}catch(e){return ''}}
+function setTok(t){if(routing||!t)return;try{const c=curTok();
+  if(PATHS){if((c||'overview')!==t)history.pushState(null,'',t==='overview'?'/':'/'+t)}
+  else if(c!==t)history.pushState(null,'','#'+t)}catch(e){}}
+function route(){
+  const t=curTok();routing=true;
+  try{
+    const app=Object.keys(APP_TOK).find(k=>APP_TOK[k]===t);
+    if(t==='books'){stop(1);openApp('code',null,'books/favorites.md')}
+    else if(t==='contact'){stop(APP_STOP.phone);openApp('phone',null)}
+  else if(app){stop(APP_STOP[app]);openApp(app,null)}
+    else{if(!ov.hidden){ov.hidden=true;document.body.classList.remove('lock')}stop(Math.max(0,STOP_TOK.indexOf(t)))}
+  }finally{routing=false}
+}
+addEventListener('hashchange',route);
+if(PATHS)addEventListener('popstate',route);
+
+boot();
+if(curTok())route();
+</script>
