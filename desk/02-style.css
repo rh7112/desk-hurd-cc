@@ -64,19 +64,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 .tip{position:absolute;left:50%;bottom:100%;transform:translate(-50%,-6px);white-space:nowrap;background:#0b0e15;border:1px solid var(--line);color:var(--ink);font:600 max(11px,.8cqw) var(--ui);padding:3px 9px;border-radius:5px;opacity:0;pointer-events:none;transition:opacity .15s;z-index:5}
 .hs:hover .tip,.hs:focus-visible .tip{opacity:1}
 
-/* mobile launcher + classic */
-.m-nav{display:none;gap:12px;padding:16px;grid-template-columns:1fr}
-.m-nav button{padding:22px 16px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);font:600 18px var(--ui);text-align:left}
-.m-nav small{display:block;font:400 13px var(--ui);color:var(--mute);margin-top:2px}
-.classic{max-width:980px;margin:28px auto 56px;padding:0 16px}
-.classic h2{font:600 20px var(--ui);margin:0 0 4px}
-.classic p{margin:0 0 14px;color:var(--mute);font-size:14px}
-.cl{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;list-style:none;margin:0;padding:0}
-.cl a{display:block;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);text-decoration:none;font-size:14px}
-.cl a:hover{border-color:var(--teal)}
-.cl small{display:block;color:var(--mute);font-size:12px}
 .hint .mob{display:none}
-@media (max-width:720px){:root{--ch:min(68dvh,560px)}.hint .dsk{display:none}.hint .mob{display:inline}.m-nav{display:grid}.stage{width:100vw;height:var(--ch);aspect-ratio:auto;margin:6px 0 0;font-size:calc(var(--ch) * .017778);touch-action:pan-y}#cam{inset:auto;left:0;top:0;width:calc(var(--ch) * 16 / 9);height:var(--ch);container-type:inline-size}}
+@media (max-width:720px){:root{--ch:min(68dvh,560px)}.hint .dsk{display:none}.hint .mob{display:inline}.stage{width:100vw;height:var(--ch);aspect-ratio:auto;margin:6px 0 0;font-size:calc(var(--ch) * .017778);touch-action:pan-y}#cam{inset:auto;left:0;top:0;width:calc(var(--ch) * 16 / 9);height:var(--ch);container-type:inline-size}}
 
 /* popover + toast */
 #pop{position:fixed;z-index:60;width:min(280px,calc(100vw - 24px));background:#0f131c;border:1px solid var(--teal);border-radius:10px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.55)}

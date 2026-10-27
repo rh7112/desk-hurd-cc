@@ -85,7 +85,6 @@ function closeApp(){
 $('#close').addEventListener('click',closeApp);
 ov.addEventListener('click',e=>{if(e.target===ov)closeApp()});
 mons().forEach(m=>m.addEventListener('click',()=>openApp(m.dataset.app,m)));
-$$('[data-m]').forEach(b=>b.addEventListener('click',()=>openApp(b.dataset.m,b)));
 function initApp(name,win){
   if(name==='code'){const narrow=$('#display').clientWidth<560;$('#exp').classList.toggle('closed',narrow);$('#tgExp').setAttribute('aria-pressed',!narrow);if(win){openFile(win)}}
   if(name==='center'){initOS();if(win)openWin(win)}
