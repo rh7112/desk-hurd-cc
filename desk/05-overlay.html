@@ -1,0 +1,117 @@
+<button class="pos mon" data-app="code" style="--x:300;--y:150;--w:224;--h:400" aria-label="Open the code monitor"><div class="scr"><i class="fl"></i><div class="gl"><i class="g"></i></div><div class="mini m-code"></div><span class="open">OPEN ▸</span></div></button>
+<button class="pos mon" data-app="center" style="--x:550;--y:330;--w:357;--h:201" aria-label="Open the center monitor: resume and about me"><div class="scr"><i class="fl"></i><div class="gl"><i class="g"></i></div><div class="mini m-os"></div><span class="open">OPEN ▸</span></div></button>
+<button class="pos mon" data-app="projects" style="--x:925;--y:330;--w:357;--h:201" aria-label="Open the right monitor: projects"><div class="scr"><i class="fl"></i><div class="gl"><i class="g"></i></div><div class="mini m-ct"></div><span class="open">OPEN ▸</span></div></button>
+<div id="hs"></div>
+</div>
+<div class="trav" id="trav" role="toolbar" aria-label="Look around the desk">
+  <button type="button" id="tPrev" aria-label="Previous view">◀</button>
+  <div class="chips" id="tChips"></div>
+  <button type="button" id="tNext" aria-label="Next view">▶</button>
+</div>
+</div>
+
+<nav class="m-nav" aria-label="Screens">
+  <button type="button" data-m="code">Code<small>VS Code-style tour of projects, blog and API</small></button>
+  <button type="button" data-m="center">Desktop<small>Resume, experience, education, terminal</small></button>
+  <button type="button" data-m="projects">Projects<small>Highlights, activity and links</small></button>
+</nav>
+
+<section class="classic" id="classic" aria-labelledby="ch">
+  <h2 id="ch">Classic view</h2>
+  <p>Plain links to everything, for screen readers, search engines and anyone who prefers a list.</p>
+  <ul class="cl">
+    <li><a href="https://ryan.hurd.cc/resume">Resume<small>ryan.hurd.cc/resume</small></a></li>
+    <li><a href="https://ryan.hurd.cc/documents/ryan-hurd-resume.pdf">Resume PDF<small>Download</small></a></li>
+    <li><a href="https://ryan.hurd.cc/volunteer">Volunteer<small>ryan.hurd.cc/volunteer</small></a></li>
+    <li><a href="https://blog.hurd.cc/blog/">Blog<small>blog.hurd.cc</small></a></li>
+    <li><a href="https://blog.hurd.cc/recipes/">Recipes<small>blog.hurd.cc</small></a></li>
+    <li><a href="https://api.hurd.cc/docs/">API docs<small>api.hurd.cc</small></a></li>
+    <li><a href="https://github.com/rh7112">GitHub<small>rh7112</small></a></li>
+    <li><a href="https://www.linkedin.com/in/ryan-lee-hurd/">LinkedIn<small>ryan-lee-hurd</small></a></li>
+    <li><a href="https://profile.indeed.com/p/ryanh-sv25zg9">Indeed<small>Profile</small></a></li>
+    <li><a href="mailto:ryan@hurd.cc">Email<small>ryan@hurd.cc</small></a></li>
+    <li><a href="tel:+13525800408">Phone<small>(352) 580-0408</small></a></li>
+    <li><a href="https://buymeacoffee.com/ryan.hurd">Buy me a coffee<small>buymeacoffee.com</small></a></li>
+  </ul>
+</section>
+</main>
+
+<button class="xbtn" id="home" type="button" hidden aria-label="Back to overview">◀ Overview</button>
+<div id="ov" hidden>
+  <button class="xbtn" id="close" type="button" aria-label="Close">✕ Close<span class="esc"> · Esc</span></button>
+  <div class="frame" id="frame" role="dialog" aria-modal="true" aria-label="Monitor">
+    <div class="display" id="display">
+
+      <section class="app" data-app="code" hidden>
+        <div class="vs">
+          <div class="vt"><span class="dots"><i></i><i></i><i></i></span><span>hurd-craft · code-editor look-alike (preview)</span></div>
+          <div class="vm">
+            <nav class="act" aria-label="Activity bar"><button id="tgExp" type="button" aria-label="Toggle explorer" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/></svg></button></nav>
+            <aside class="exp" id="exp"><h3>EXPLORER</h3><div id="tree"></div></aside>
+            <div class="ed"><div class="tabs" id="tabs" role="tablist"></div><div class="codeA" id="codeA" tabindex="0" aria-label="File contents"></div></div>
+          </div>
+          <footer class="sb"><span>⎇ main</span><span id="sbSite">● site up (sample)</span><span class="sp"></span><span id="sbLang" class="hide">Markdown</span></footer>
+        </div>
+      </section>
+
+      <section class="app" data-app="center" hidden>
+        <div class="os" id="os">
+          <div class="icons" id="icons"></div>
+          <div id="wins"></div>
+          <div id="start" hidden></div>
+          <div class="task"><button class="sbtn" id="startBtn" type="button" aria-haspopup="true">Start</button><span id="running" style="display:flex;gap:6px"></span><span class="sp"></span><time id="clock"></time></div>
+        </div>
+      </section>
+
+      <section class="app" data-app="projects" hidden>
+        <div class="pd">
+          <header class="ph2"><div class="mono" aria-hidden="true">RH</div><div><h2>Projects</h2><p>Ryan Hurd · what I'm building, at a glance</p></div><span class="live">● all systems up (sample)</span></header>
+          <div class="pg">
+            <div class="pcol">
+              <a class="pj" href="https://ryan.hurd.cc" target="_blank" rel="noopener noreferrer"><h3>Portfolio + desk</h3><p>The site you are looking at: a plain view plus this interactive desk.</p><span class="tg"><i>Next.js</i><i>Tailwind</i><i>Cloudflare</i></span></a>
+              <a class="pj" href="https://api.hurd.cc/docs/" target="_blank" rel="noopener noreferrer"><h3>Portfolio API</h3><p>Public REST API behind the site, with live docs.</p><span class="tg"><i>API</i><i>Docs</i><i>Docker</i></span></a>
+              <a class="pj" href="https://blog.hurd.cc/blog/" target="_blank" rel="noopener noreferrer"><h3>Blog &amp; recipes</h3><p>Writing, tutorials and family recipes.</p><span class="tg"><i>Blog</i><i>Recipes</i></span></a>
+              <a class="pj" href="https://github.com/rh7112" target="_blank" rel="noopener noreferrer"><h3>Family location</h3><p>Private family location sharing app.</p><span class="tg"><i>Web</i><i>Maps</i></span></a>
+            </div>
+            <div class="pside">
+              <div class="act2"><h3>GitHub activity <small>sample data</small></h3><div id="gh" class="gh" aria-hidden="true"></div><p class="lg">Less <i class="l0"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i> More</p></div>
+              <ul class="lk">
+                <li><a href="https://github.com/rh7112" target="_blank" rel="noopener noreferrer">GitHub<small>rh7112</small></a></li>
+                <li><a href="https://blog.hurd.cc/blog/" target="_blank" rel="noopener noreferrer">Blog<small>blog.hurd.cc</small></a></li>
+                <li><a href="https://api.hurd.cc/docs/" target="_blank" rel="noopener noreferrer">API docs<small>api.hurd.cc</small></a></li>
+                <li><a href="#phone">Contact<small>pick up the phone</small></a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="app" data-app="phone" hidden>
+        <div class="ph">
+          <div class="dev">
+            <h2>Ryan Hurd</h2><p class="sub">(352) 580-0408</p>
+            <div class="big">
+              <a href="tel:+13525800408"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg>Call</a>
+              <a href="sms:+13525800408"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></svg>Text</a>
+              <a href="mailto:ryan@hurd.cc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>Email</a>
+            </div>
+            <ul>
+              <li><a href="https://github.com/rh7112" target="_blank" rel="noopener noreferrer">GitHub<small>rh7112</small></a></li>
+              <li><a href="https://www.linkedin.com/in/ryan-lee-hurd/" target="_blank" rel="noopener noreferrer">LinkedIn<small>ryan-lee-hurd</small></a></li>
+              <li><a href="https://profile.indeed.com/p/ryanh-sv25zg9" target="_blank" rel="noopener noreferrer">Indeed<small>Profile</small></a></li>
+              <li><a href="https://hurd.cc" target="_blank" rel="noopener noreferrer">Website<small>hurd.cc</small></a></li>
+              <li><a href="https://ryan.hurd.cc/documents/ryan-hurd-resume.pdf" target="_blank" rel="noopener noreferrer">Resume<small>PDF</small></a></li>
+              <li><a href="https://open.spotify.com/playlist/3SsieOKDqSszt55fO5n6UO" target="_blank" rel="noopener noreferrer">Spotify<small>Americana playlist</small></a></li>
+              <li><a href="https://buymeacoffee.com/ryan.hurd" target="_blank" rel="noopener noreferrer">Buy me a coffee<small>☕</small></a></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div id="pop" hidden role="dialog" aria-label="Details"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
