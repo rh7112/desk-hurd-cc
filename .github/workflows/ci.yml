@@ -1,0 +1,19 @@
+name: CI
+
+# Builds the single-file desk page.
+# Runs on pull requests so a broken build shows up on the PR instead of
+# after merge. Deploy is deploy.yml.
+
+on:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+
+      - run: sh build.sh
+      - run: test -s public/index.html
