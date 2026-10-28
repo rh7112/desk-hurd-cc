@@ -15,6 +15,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .btn{background:var(--panel2);border:1px solid var(--line);color:var(--ink);padding:5px 12px;border-radius:6px;font:600 13px var(--ui);text-decoration:none;display:inline-block}
 .btn:hover{border-color:var(--teal)}
 .hint{margin:0;text-align:center;font-size:13px;color:var(--mute);padding:8px 16px 0}
+.simple{margin:8px 0 0;text-align:center}
 
 /* ---------- stage ---------- */
 .stage{position:relative;overflow:hidden;width:min(100vw,calc((100vh - 40px) * 16 / 9));aspect-ratio:16/9;margin:6px auto 0;container-type:inline-size;font-size:calc(.0625cqw * 16)}
