@@ -46,8 +46,6 @@ function boot(){
   if(reduced){mons().forEach(finishMon);return}
   mons().forEach(m=>bootMon(m,SEQ[m.dataset.app],id));
 }
-$('#replay').addEventListener('click',boot);
-$('#skip').addEventListener('click',()=>{bootId++;mons().forEach(finishMon)});
 
 /* ---------- overlay ---------- */
 const AR={code:.6,center:1.6,projects:1.6,phone:.5};
